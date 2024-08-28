@@ -4,6 +4,9 @@ import com.suyh.security.UserToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -14,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -29,6 +33,7 @@ import java.util.Map;
 @Service("userDetailsService")
 public class SuyhUserDetailsService implements UserDetailsService, LogoutSuccessHandler, UserToken {
     private static final String secret = "abcdefghijklmnopqrstuvwxyz";
+    private static final Logger log = LoggerFactory.getLogger(SuyhUserDetailsService.class);
 
     // TODO: suyh - 缓存用户信息
 
@@ -51,13 +56,31 @@ public class SuyhUserDetailsService implements UserDetailsService, LogoutSuccess
         // TODO: suyh - 用户登出，需要清理相关缓存以及token 失效
     }
 
+    /**
+     * token 校验失败，则返回null，不要抛出异常。
+     */
     @Override
+    @Nullable
     public User loginUserDetail(String token) {
-        // 解析token 得到用户
-        Claims claims = parseToken(token);
-        String username = claims.getSubject();
+       try {
+           // 解析token 得到用户
+           Claims claims = parseToken(token);
+           if (claims == null) {
+               return null;
+           }
 
-        return new User(username, "123", AuthorityUtils.NO_AUTHORITIES);
+           String username = claims.getSubject();
+           if (!StringUtils.hasText(username)) {
+               return null;
+           }
+
+           // TODP: suyh - 查询用户是否存在，以及对应的状态是否正常，随后就可以继续了。
+
+           return new User(username, "123", AuthorityUtils.NO_AUTHORITIES);
+       } catch (Exception exception) {
+           log.error("token authentication failed", exception);
+           return null;
+       }
     }
 
     public static String createToken(Map<String, Object> claims, String username) {

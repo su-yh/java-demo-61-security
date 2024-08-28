@@ -63,7 +63,9 @@ public class SuyhSecurityConfiguration extends WebSecurityConfigurerAdapter {
         AuthenticationAfterForwardHandler usernamePasswordForwardHandler = new AuthenticationAfterForwardHandler(
                 "/login/after/successful/username/password", "/login/after/failure/username/password");
         http.formLogin()    // 登录页面，这里会引入 UsernamePasswordAuthenticationFilter
-                .loginProcessingUrl("/user/login") // 登录访问路径，这个路径并不需要我们自己实现，security 它会自动处理。
+                // 这里填的路径就是前端使用用户名和密码来登录的接口，但是不需要我们实现逻辑，只需要配置就行了。
+                // 其实主要是这里的默认值是 /login 想要使用其他 路径时才需要 配置。
+                .loginProcessingUrl("/user/suyh-test/login") // 登录访问路径，这个路径并不需要我们自己实现，security 它会自动处理。
                 // 当登录成功之后的自定义处理器，默认实现是：SavedRequestAwareAuthenticationSuccessHandler
                 .successHandler(usernamePasswordForwardHandler)
                 .failureHandler(usernamePasswordForwardHandler);
@@ -90,7 +92,7 @@ public class SuyhSecurityConfiguration extends WebSecurityConfigurerAdapter {
 //                // 密码错误时，会内部跳转到该uri 中。不过该实现是依赖于默认的实现。
 //                .failureForwardUrl("/login/after/failure");
 
-        http.authorizeRequests().antMatchers("/", "/test/hello").permitAll() // 设置哪些路径可以直接访问，不需要认证
+        http.authorizeRequests().antMatchers("/", "/test/hello", "/login.html").permitAll() // 设置哪些路径可以直接访问，不需要认证
                 // .antMatchers("/test/index").hasAuthority("admins")  // 指定路径 /test/index 需要 admins 权限才可以访问，该admins 对应SuyhUserDetailsService  中的权限
                 // .antMatchers("/test/index").hasAnyAuthority("admins,manager")  // 指定路径 /test/index 需要 admins或者manager 权限才可以访问，该admins 对应SuyhUserDetailsService  中的权限
                 // .antMatchers("/test/index").hasRole("sale") // 这里只写了sale, 但是它实际上被处理成了: ROLE_sale

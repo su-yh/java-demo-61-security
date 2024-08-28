@@ -28,14 +28,20 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-
         String token = request.getHeader(HttpHeaders.AUTHORIZATION);
+
         if (StringUtils.hasText(token)) {
             User user = userToken.loginUserDetail(token);
-            SuyhAuthenticationToken authenticationToken = new SuyhAuthenticationToken(user);
-            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            // 只要往上下文中添加该实例对象就被认为是认证通过了。
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            if (user != null) {
+                SuyhAuthenticationToken authenticationToken = new SuyhAuthenticationToken(user);
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // 只要往上下文中添加该实例对象就被认为是认证通过了。
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            } else {
+                // token 校验 失败，认证未通过，直接往 下走就可以 了。
+                // 它会抛出对应异常，然后继续走到.authenticationEntryPoint(xxx) 这个配置对应 的地方。
+                System.out.println("认证失败");
+            }
         }
 
         chain.doFilter(request, response);
