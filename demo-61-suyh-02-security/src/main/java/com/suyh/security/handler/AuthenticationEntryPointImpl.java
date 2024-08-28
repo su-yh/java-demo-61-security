@@ -9,13 +9,13 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 认证失败的后置处理
+ * 也就是说对于需要 登录的url，需要校验token 是否正确，如果不正确则会在拦截并走到此处。
+ * 让其重新登录
  *
  * @author suyh
  * @since 2024-03-08
- * @deprecated 使用认证成功/失败的后置处理器之后就不需要实现这种异常拦截了。所有的异常拦截都让其内部跳转到一个url 里面再进行抛出业务异常即可。
  */
 @Slf4j
-@Deprecated
 public class AuthenticationEntryPointImpl
         implements AuthenticationEntryPoint {
 

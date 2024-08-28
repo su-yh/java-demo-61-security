@@ -1,9 +1,9 @@
 package com.suyh.security.configurer;
 
 import com.suyh.security.filter.JwtAuthenticationTokenFilter;
-import com.suyh.security.filter.SmsCodeAuthenticationProcessingFilter;
+import com.suyh.security.handler.AccessDeniedHandlerImpl;
 import com.suyh.security.handler.AuthenticationAfterForwardHandler;
-import com.suyh.security.provider.SmsCodeAuthenticationProvider;
+import com.suyh.security.handler.AuthenticationEntryPointImpl;
 import com.suyh.security.service.SuyhUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -45,12 +45,16 @@ public class SuyhSecurityConfiguration extends WebSecurityConfigurerAdapter {
         // suyh - 像ruoyi 和芋道的实现都是直接响应结果并指定401 ，但是我觉得可以在统一的异常处理，那里再解决。
         // 不行，这个异常已经处理处理，不会走到统一的异常处理那里去了，所以这里必须要处理。
         // 不过，现在使用了认证成功/失败的处理器，都是直接内部forward 到一个url，所以所有的异常处理都可以在该url 里面再抛出就可以了。
-        // http.exceptionHandling().authenticationEntryPoint(new AuthenticationEntryPointImpl());
+        // suyh -  20240829: 错了错了，上面的理解有问题。这里是用户未认证时的异常处理。
+        // 也就是说对token 的校验失败，最终的表现就是 SecurityContextHolder.getContext().setAuthentication(null);  设置为null 时就是未认证
+        http.exceptionHandling().authenticationEntryPoint(new AuthenticationEntryPointImpl());
 
         // 403 权限不足的异常处理
         // suyh - 像ruoyi 和芋道的实现都是直接响应结果并指定403 ，但是我觉得可以在统一的异常处理，那里再解决。
         // 不过，现在使用了认证成功/失败的处理器，都是直接内部forward 到一个url，所以所有的异常处理都可以在该url 里面再抛出就可以了。
-        // http.exceptionHandling().accessDeniedHandler(new AccessDeniedHandlerImpl());
+        // suyh -  20240829: 错了错了，上面的理解有问题。这里是用户认证通过了，但是没有对应角色访问该接口。
+        // 不过一般也不会使用springSecurity 的权限，而是自定义另外的权限。
+        http.exceptionHandling().accessDeniedHandler(new AccessDeniedHandlerImpl());
 
         // 基于token 处理，所以禁用session.
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -64,19 +68,19 @@ public class SuyhSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .successHandler(usernamePasswordForwardHandler)
                 .failureHandler(usernamePasswordForwardHandler);
 
-        // 基于短信的登录校验处理器
-        // 可以添加多组登录处理器与相对应的过滤器
-        AuthenticationAfterForwardHandler smsCodeForwardHandler = new AuthenticationAfterForwardHandler(
-                "/login/after/successful/sms/code", "/login/after/failure/sms/code");
-        // 这里的主要作用就是将spring security 中的一些公共配置也作用于下面的认证器与过滤器
-        // 其中最重要的一个配置就是 ProviderManager 对象，如果没有这个apply() 方法的调用，则 filter 中将不会有值。
-        SmsCodeAuthenticationProcessingFilter filter = new SmsCodeAuthenticationProcessingFilter("/sms/login");
-        // 这里的调用等同于 http.formLogin()
-        http.apply(new SmsFormLoginConfigurer<>(filter)).loginProcessingUrl("/sms/login")
-                .successHandler(smsCodeForwardHandler)
-                .failureHandler(smsCodeForwardHandler);
-        http.authenticationProvider(new SmsCodeAuthenticationProvider());
-        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+//        // 基于短信的登录校验处理器
+//        // 可以添加多组登录处理器与相对应的过滤器
+//        AuthenticationAfterForwardHandler smsCodeForwardHandler = new AuthenticationAfterForwardHandler(
+//                "/login/after/successful/sms/code", "/login/after/failure/sms/code");
+//        // 这里的主要作用就是将spring security 中的一些公共配置也作用于下面的认证器与过滤器
+//        // 其中最重要的一个配置就是 ProviderManager 对象，如果没有这个apply() 方法的调用，则 filter 中将不会有值。
+//        SmsCodeAuthenticationProcessingFilter filter = new SmsCodeAuthenticationProcessingFilter("/sms/login");
+//        // 这里的调用等同于 http.formLogin()
+//        http.apply(new SmsFormLoginConfigurer<>(filter)).loginProcessingUrl("/sms/login")
+//                .successHandler(smsCodeForwardHandler)
+//                .failureHandler(smsCodeForwardHandler);
+//        http.authenticationProvider(new SmsCodeAuthenticationProvider());
+//        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
 
 //        http.formLogin()
 //                .loginPage("/login.html") // 登录页面设置
