@@ -4,6 +4,7 @@ import com.suyh.security.UserToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
@@ -31,14 +32,19 @@ import java.util.Map;
  * @since 2023-11-04
  */
 @Service("userDetailsService")
+@Slf4j
 public class SuyhUserDetailsService implements UserDetailsService, LogoutSuccessHandler, UserToken {
-    private static final String secret = "abcdefghijklmnopqrstuvwxyz";
-    private static final Logger log = LoggerFactory.getLogger(SuyhUserDetailsService.class);
+    private static final String secret = "fb8b6ef9484b4817af12c1a6edf39262";
 
     // TODO: suyh - 缓存用户信息
 
-    // 加载用户信息，主要是在用户登录的时候才会调用，在使用过程中基本都是通过token 来获取登录用户详细信息。
-    // 所以这里每次从数据库中查询影响也不大
+    /**
+     * 加载用户信息，主要是在用户登录的时候才会调用，在使用过程中基本都是通过token 来获取登录用户详细信息。
+     * 所以这里每次从数据库中查询影响也不大
+     *
+     * @return
+     * @throws UsernameNotFoundException 当用户未找到时直接 抛出该异常即可
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 这个用户所拥有哪些权限
